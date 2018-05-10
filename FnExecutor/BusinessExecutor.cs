@@ -1,5 +1,5 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
+using System.Linq;
 
 namespace FnExecutor
 {
@@ -20,13 +20,17 @@ namespace FnExecutor
         /// </summary>
         List<BusinessException> Errors { get; set; }
 
+
+
         /// <summary>
-        /// ensure the delegate is true
+        /// The first exception
         /// </summary>
-        /// <param name="truthy">The delegate function to check</param>
-        /// <param name="message">The error message if delegate is false</param>
-        /// <returns>The current business</returns>
-        BusinessExecutor Ensure(Func<bool> truthy, string message);
+        BusinessException FirstException { get; }
+
+        /// <summary>
+        /// The last exception
+        /// </summary>
+        BusinessException LastException { get; }
     }
 
     public class BusinessExecutor : IBusinessExecutor
@@ -47,40 +51,13 @@ namespace FnExecutor
         public List<BusinessException> Errors { get; set; } = new List<BusinessException>();
 
         /// <summary>
-        /// ensure the delegate is true
+        /// The first exception
         /// </summary>
-        /// <param name="truthy">The delegate function to check</param>
-        /// <param name="message">The error message if delegate is false</param>
-        /// <returns>The current business</returns>
-        public BusinessExecutor Ensure(Func<bool> truthy, string message)
-        {
-            System.Diagnostics.Debug.Assert(!string.IsNullOrWhiteSpace(message), "Ensure message must be not null or whitespace");
+        public BusinessException FirstException => Errors.OrderBy(x => x.ExceptionDate).FirstOrDefault();
 
-            if (IsFailure)
-                return this;
-
-            var @true = false;
-
-            try
-            {
-                @true = truthy();
-            }
-            catch (BusinessException ex)
-            {
-                Errors.Add(ex);
-            }
-            catch
-            {
-                Errors.Add(new BusinessException(message));
-            }
-
-            if (!@true)
-            {
-                IsFailure = false;
-                Errors.Add(new BusinessException(message));
-            }
-
-            return this;
-        }
+        /// <summary>
+        /// The last exception
+        /// </summary>
+        public BusinessException LastException => Errors.OrderByDescending(x => x.ExceptionDate).FirstOrDefault();
     }
 }
